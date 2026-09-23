@@ -67,22 +67,28 @@ import System
 from System import Enum, Array, Object
 
 
-# Geometry and saved joint data remain inch based. The form converts to the
-# unit active when it opened, so metric users work in their familiar units.
+# Geometry and saved joint data remain inch based. The form converts values
+# to the active document's File Properties > Units > Length Unit setting.
 SESSION_UNITS = None
 DISPLAY_UNIT = 'in'
 DISPLAY_UNITS_PER_INCH = 1.0
 try:
     SESSION_UNITS = Units.Current
-    _SessionUnitName = str(SESSION_UNITS).lower()
-    if 'millimeter' in _SessionUnitName:
+except:
+    pass
+try:
+    # This is the document display setting, not the script engine's Units.Current.
+    _DocumentUnitName = str(DT_Session.DesignProperties.LengthDisplayUnits).lower()
+    if 'millimeter' in _DocumentUnitName:
         DISPLAY_UNIT, DISPLAY_UNITS_PER_INCH = 'mm', 25.4
-    elif 'centimeter' in _SessionUnitName:
+    elif 'centimeter' in _DocumentUnitName:
         DISPLAY_UNIT, DISPLAY_UNITS_PER_INCH = 'cm', 2.54
-    elif 'meter' in _SessionUnitName:
+    elif 'meter' in _DocumentUnitName:
         DISPLAY_UNIT, DISPLAY_UNITS_PER_INCH = 'm', 0.0254
-    elif 'foot' in _SessionUnitName or 'feet' in _SessionUnitName:
+    elif 'feet' in _DocumentUnitName or 'foot' in _DocumentUnitName:
         DISPLAY_UNIT, DISPLAY_UNITS_PER_INCH = 'ft', 1.0 / 12.0
+    elif 'inch' in _DocumentUnitName:
+        DISPLAY_UNIT, DISPLAY_UNITS_PER_INCH = 'in', 1.0
 except:
     pass
 try:
@@ -90,13 +96,12 @@ try:
 except:
     pass
 SESSION_DISPLAY_UNIT = DISPLAY_UNIT
-UNIT_SCALE = {'in': 1.0, 'mm': 25.4, 'cm': 2.54, 'm': 0.0254}
+UNIT_SCALE = {'in': 1.0, 'mm': 25.4, 'cm': 2.54, 'm': 0.0254, 'ft': 1.0 / 12.0}
 UNIT_LABELS = {'in': 'Inches (in)', 'mm': 'Millimeters (mm)',
-               'cm': 'Centimeters (cm)', 'm': 'Meters (m)'}
-
+               'cm': 'Centimeters (cm)', 'm': 'Meters (m)', 'ft': 'Feet (ft)'}
 def UnitChoices():
     return ['Use Alibre session (%s)' % SESSION_DISPLAY_UNIT,
-            UNIT_LABELS['in'], UNIT_LABELS['mm'], UNIT_LABELS['cm'], UNIT_LABELS['m']]
+            UNIT_LABELS['in'], UNIT_LABELS['mm'], UNIT_LABELS['cm'], UNIT_LABELS['m'], UNIT_LABELS['ft']]
 
 def SetDisplayUnitChoice(Choice):
     global DISPLAY_UNIT, DISPLAY_UNITS_PER_INCH
@@ -109,6 +114,8 @@ def SetDisplayUnitChoice(Choice):
         Key = 'cm'
     elif '(m)' in Choice:
         Key = 'm'
+    elif '(ft)' in Choice:
+        Key = 'ft'
     else:
         Key = 'in'
     DISPLAY_UNIT = Key
