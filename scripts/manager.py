@@ -1,4 +1,4 @@
-# Sliding Dovetail Joint Manager v0.7.1
+# Sliding Dovetail Joint Manager v0.8.0
 # Author: Chris Adcock
 # Alibre Script / IronPython 2.7
 #
@@ -89,17 +89,59 @@ try:
     Units.Current = UnitTypes.Inches
 except:
     pass
+SESSION_DISPLAY_UNIT = DISPLAY_UNIT
+UNIT_SCALE = {'in': 1.0, 'mm': 25.4, 'cm': 2.54, 'm': 0.0254}
+UNIT_LABELS = {'in': 'Inches (in)', 'mm': 'Millimeters (mm)',
+               'cm': 'Centimeters (cm)', 'm': 'Meters (m)'}
+
+def UnitChoices():
+    return ['Use Alibre session (%s)' % SESSION_DISPLAY_UNIT,
+            UNIT_LABELS['in'], UNIT_LABELS['mm'], UNIT_LABELS['cm'], UNIT_LABELS['m']]
+
+def SetDisplayUnitChoice(Choice):
+    global DISPLAY_UNIT, DISPLAY_UNITS_PER_INCH
+    Choice = str(Choice)
+    if Choice.startswith('Use Alibre session'):
+        Key = SESSION_DISPLAY_UNIT
+    elif '(mm)' in Choice:
+        Key = 'mm'
+    elif '(cm)' in Choice:
+        Key = 'cm'
+    elif '(m)' in Choice:
+        Key = 'm'
+    else:
+        Key = 'in'
+    DISPLAY_UNIT = Key
+    DISPLAY_UNITS_PER_INCH = UNIT_SCALE[Key]
 
 def ToDisplayLength(Inches): return float(Inches) * DISPLAY_UNITS_PER_INCH
 def ToInternalLength(DisplayValue): return float(DisplayValue) / DISPLAY_UNITS_PER_INCH
 def SetLengthInput(Index, Inches): Win.SetInputValue(Index, ToDisplayLength(Inches))
 def GetLengthInput(Index): return ToInternalLength(float(Win.GetInputValue(Index)))
 def DisplayLengthText(Inches, Decimals=4): return ('%.*f' % (Decimals, ToDisplayLength(Inches))).rstrip('0').rstrip('.')
+
+def ChangeDisplayUnit(Choice):
+    # Convert the values currently visible in the form back to inches using
+    # the old display unit, then redraw them using the newly selected unit.
+    Values = {}
+    for Index in [IDX_HEAD, IDX_DEPTH, IDX_CLEARANCE, IDX_DISTANCE, IDX_MINWALL, IDX_BLEND]:
+        try:
+            Values[Index] = GetLengthInput(Index)
+        except:
+            pass
+    SetDisplayUnitChoice(Choice)
+    Win.SetLengthUnit(DISPLAY_UNIT)
+    for Index, Inches in Values.items():
+        SetLengthInput(Index, Inches)
+    UpdateLengthModeInputs()
+    UpdateMaxHeadDisplay()
+    Win.InfoDialog('Display units set to %s.' % DISPLAY_UNIT)
+
 def RestoreSessionUnits():
     if SESSION_UNITS is None: return
     try: Units.Current = SESSION_UNITS
     except: pass
-SCRIPT_NAME = 'Sliding Dovetail Joint Manager v0.7.1'
+SCRIPT_NAME = 'Sliding Dovetail Joint Manager v0.8.0'
 REF_TOL = 0.005
 PROPERTY_NAME = '3DP_DT_DATA'
 REGISTRY_SCHEMA = 4
@@ -3037,12 +3079,14 @@ def CreateManagerForm():
     global Win
     Win = ManagerForm(Options, OnInputChanged, ManageJoint,
                       HandleDefaultsAction, CleanupManager,
-                      'Sliding Dovetail Joint Manager v0.8.0', DISPLAY_UNIT)
+                      'Sliding Dovetail Joint Manager v0.8.0', DISPLAY_UNIT, UnitChoices(), ChangeDisplayUnit)
     UpdateOperationUI(0)
     Win.RefreshOperation()
     return Win
 
 run_manager(DT_Parent, CreateManagerForm)
+
+
 
 
 

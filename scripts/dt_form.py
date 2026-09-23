@@ -12,13 +12,15 @@ from System.Windows.Forms import (Form, Label, TextBox, ComboBox, Button,
 
 
 class ManagerForm(object):
-    def __init__(self, options, changed, apply, defaults, cleanup, title, length_unit='in'):
+    def __init__(self, options, changed, apply, defaults, cleanup, title, length_unit='in', unit_choices=None, unit_changed=None):
         self.options = options
         self.changed = changed
         self.apply = apply
         self.defaults = defaults
         self.cleanup = cleanup
+        self.unit_changed = unit_changed
         self.controls = {}
+        self.length_labels = {}
         self.muted = 0
         self.closed = ManualResetEvent(False)
         self.form = Form()
@@ -48,6 +50,7 @@ class ManagerForm(object):
         self.controls[1] = ComboBox()
         self._heading('Joint operation')
         self._input(0, 'Operation')
+        self._unit_input(length_unit, unit_choices or [], unit_changed)
         self._input(2, 'Existing Joint')
         self._heading('Capture geometry')
         self._text('Select one item in the Alibre workspace, then press the matching Capture button. The label confirms each saved selection.')
@@ -55,7 +58,7 @@ class ManagerForm(object):
                              (5, 'Shared Seam Edge'), (6, 'Shared Start Reference Edge')]:
             self._capture_input(index, label, ['male', 'female', 'seam', 'start'][index - 3])
         self._capture_input(8, options[8][0].replace(' (selected)', ''), 'limit')
-        self._heading('Parameters - %s, except angle' % length_unit)
+        self.parameters_heading = self._heading('Parameters - %s, except angle' % length_unit)
         for index in [7, 9, 10, 11, 12, 13, 14, 15, 16]:
             label = options[index][0].replace(' (selected)', '')
             self._input(index, label, readonly=index in [8, 16])
@@ -118,6 +121,36 @@ class ManagerForm(object):
         label = self._text(text)
         label.Font = Font(self.form.Font, FontStyle.Bold)
         label.ForeColor = Color.FromArgb(35, 75, 110)
+        return label
+
+    def _unit_input(self, length_unit, choices, changed):
+        label = Label()
+        label.Text = 'Display Units'
+        label.AutoSize = True
+        label.Anchor = AnchorStyles.Left
+        label.Margin = Padding(3, 5, 6, 5)
+        control = ComboBox()
+        control.DropDownStyle = ComboBoxStyle.DropDownList
+        for choice in choices:
+            control.Items.Add(choice)
+        control.SelectedIndex = 0 if control.Items.Count else -1
+        if changed is not None:
+            def handler(sender, event):
+                if not self.muted:
+                    changed(str(control.SelectedItem))
+            control.SelectedIndexChanged += handler
+        control.Dock = DockStyle.Fill
+        self.table.Controls.Add(label, 0, self.row)
+        self.table.Controls.Add(control, 1, self.row)
+        self.table.SetColumnSpan(control, 2)
+        self.row += 1
+        self.unit_control = control
+
+    def SetLengthUnit(self, unit):
+        self.parameters_heading.Text = 'Parameters - %s, except angle' % unit
+        for label in self.length_labels.values():
+            base = label.Text.split(' (')[0]
+            label.Text = '%s (%s)' % (base, unit)
 
     def _input(self, index, title, readonly=False):
         option = self.options[index]
@@ -126,6 +159,8 @@ class ManagerForm(object):
         label.AutoSize = True
         label.Anchor = AnchorStyles.Left
         label.Margin = Padding(3, 5, 6, 5)
+        if index in [9, 10, 12, 13, 14, 15, 16]:
+            self.length_labels[index] = label
         if isinstance(option[2], list):
             control = ComboBox()
             control.DropDownStyle = ComboBoxStyle.DropDownList
@@ -343,4 +378,5 @@ def run_manager(parent, create):
     if not parent.IsDisposed:
         parent.Invoke(Action(lambda: None))
     holder[0].closed.Dispose()
+
 
