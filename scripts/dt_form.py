@@ -12,7 +12,7 @@ from System.Windows.Forms import (Form, Label, TextBox, ComboBox, Button,
 
 
 class ManagerForm(object):
-    def __init__(self, options, changed, apply, defaults, cleanup, title):
+    def __init__(self, options, changed, apply, defaults, cleanup, title, length_unit='in'):
         self.options = options
         self.changed = changed
         self.apply = apply
@@ -55,7 +55,7 @@ class ManagerForm(object):
                              (5, 'Shared Seam Edge'), (6, 'Shared Start Reference Edge')]:
             self._capture_input(index, label, ['male', 'female', 'seam', 'start'][index - 3])
         self._capture_input(8, options[8][0].replace(' (selected)', ''), 'limit')
-        self._heading('Parameters - inches, except angle')
+        self._heading('Parameters - %s, except angle' % length_unit)
         for index in [7, 9, 10, 11, 12, 13, 14, 15, 16]:
             label = options[index][0].replace(' (selected)', '')
             self._input(index, label, readonly=index in [8, 16])
@@ -343,3 +343,4 @@ def run_manager(parent, create):
     if not parent.IsDisposed:
         parent.Invoke(Action(lambda: None))
     holder[0].closed.Dispose()
+

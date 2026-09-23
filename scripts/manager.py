@@ -67,11 +67,38 @@ import System
 from System import Enum, Array, Object
 
 
+# Geometry and saved joint data remain inch based. The form converts to the
+# unit active when it opened, so metric users work in their familiar units.
+SESSION_UNITS = None
+DISPLAY_UNIT = 'in'
+DISPLAY_UNITS_PER_INCH = 1.0
+try:
+    SESSION_UNITS = Units.Current
+    _SessionUnitName = str(SESSION_UNITS).lower()
+    if 'millimeter' in _SessionUnitName:
+        DISPLAY_UNIT, DISPLAY_UNITS_PER_INCH = 'mm', 25.4
+    elif 'centimeter' in _SessionUnitName:
+        DISPLAY_UNIT, DISPLAY_UNITS_PER_INCH = 'cm', 2.54
+    elif 'meter' in _SessionUnitName:
+        DISPLAY_UNIT, DISPLAY_UNITS_PER_INCH = 'm', 0.0254
+    elif 'foot' in _SessionUnitName or 'feet' in _SessionUnitName:
+        DISPLAY_UNIT, DISPLAY_UNITS_PER_INCH = 'ft', 1.0 / 12.0
+except:
+    pass
 try:
     Units.Current = UnitTypes.Inches
 except:
     pass
 
+def ToDisplayLength(Inches): return float(Inches) * DISPLAY_UNITS_PER_INCH
+def ToInternalLength(DisplayValue): return float(DisplayValue) / DISPLAY_UNITS_PER_INCH
+def SetLengthInput(Index, Inches): Win.SetInputValue(Index, ToDisplayLength(Inches))
+def GetLengthInput(Index): return ToInternalLength(float(Win.GetInputValue(Index)))
+def DisplayLengthText(Inches, Decimals=4): return ('%.*f' % (Decimals, ToDisplayLength(Inches))).rstrip('0').rstrip('.')
+def RestoreSessionUnits():
+    if SESSION_UNITS is None: return
+    try: Units.Current = SESSION_UNITS
+    except: pass
 SCRIPT_NAME = 'Sliding Dovetail Joint Manager v0.7.1'
 REF_TOL = 0.005
 PROPERTY_NAME = '3DP_DT_DATA'
@@ -2283,8 +2310,8 @@ def UpdateMaxHeadDisplay():
 
     try:
         AngleDeg = float(Win.GetInputValue(IDX_ANGLE))
-        Clearance = float(Win.GetInputValue(IDX_CLEARANCE))
-        MinWall = float(Win.GetInputValue(IDX_MINWALL))
+        Clearance = GetLengthInput(IDX_CLEARANCE)
+        MinWall = GetLengthInput(IDX_MINWALL)
     except:
         Win.SetInputValue(IDX_MAXHEAD, '')
         return
@@ -2301,7 +2328,7 @@ def UpdateMaxHeadDisplay():
     elif MaxHead <= 0:
         Win.SetInputValue(IDX_MAXHEAD, 'No valid width')
     else:
-        Win.SetInputValue(IDX_MAXHEAD, '%.4f' % MaxHead)
+        Win.SetInputValue(IDX_MAXHEAD, DisplayLengthText(MaxHead))
 
 
 def UpdateLengthModeInputs():
@@ -2510,14 +2537,14 @@ def ResetCreateInputs():
 
     # Restore the actual dialog defaults.
     Win.SetInputValue(IDX_LENGTHMODE, USER_DEFAULTS['length_mode'])
-    Win.SetInputValue(IDX_HEAD, USER_DEFAULTS['head_width'])
-    Win.SetInputValue(IDX_DEPTH, USER_DEFAULTS['depth'])
+    SetLengthInput(IDX_HEAD, USER_DEFAULTS['head_width'])
+    SetLengthInput(IDX_DEPTH, USER_DEFAULTS['depth'])
     Win.SetInputValue(IDX_ANGLE, USER_DEFAULTS['angle'])
-    Win.SetInputValue(IDX_CLEARANCE, USER_DEFAULTS['clearance'])
-    Win.SetInputValue(IDX_DISTANCE, USER_DEFAULTS['distance'])
+    SetLengthInput(IDX_CLEARANCE, USER_DEFAULTS['clearance'])
+    SetLengthInput(IDX_DISTANCE, USER_DEFAULTS['distance'])
     Win.SetInputValue(IDX_LIMITPLANE, '')
-    Win.SetInputValue(IDX_MINWALL, USER_DEFAULTS['min_wall'])
-    Win.SetInputValue(IDX_BLEND, USER_DEFAULTS['blend_radius'])
+    SetLengthInput(IDX_MINWALL, USER_DEFAULTS['min_wall'])
+    SetLengthInput(IDX_BLEND, USER_DEFAULTS['blend_radius'])
 
     # Derived display is undefined until a new start/reference edge is chosen.
     Win.SetInputValue(IDX_MAXHEAD, 'Select start edge')
@@ -2583,13 +2610,13 @@ def RestoreCreateCapturePrompts():
 
 def ApplyDefaultsToInputs(Values):
     Win.SetInputValue(IDX_LENGTHMODE, Values['length_mode'])
-    Win.SetInputValue(IDX_HEAD, Values['head_width'])
-    Win.SetInputValue(IDX_DEPTH, Values['depth'])
+    SetLengthInput(IDX_HEAD, Values['head_width'])
+    SetLengthInput(IDX_DEPTH, Values['depth'])
     Win.SetInputValue(IDX_ANGLE, Values['angle'])
-    Win.SetInputValue(IDX_CLEARANCE, Values['clearance'])
-    Win.SetInputValue(IDX_DISTANCE, Values['distance'])
-    Win.SetInputValue(IDX_MINWALL, Values['min_wall'])
-    Win.SetInputValue(IDX_BLEND, Values['blend_radius'])
+    SetLengthInput(IDX_CLEARANCE, Values['clearance'])
+    SetLengthInput(IDX_DISTANCE, Values['distance'])
+    SetLengthInput(IDX_MINWALL, Values['min_wall'])
+    SetLengthInput(IDX_BLEND, Values['blend_radius'])
     UpdateLengthModeInputs()
     UpdateMaxHeadDisplay()
 
@@ -2599,13 +2626,13 @@ def SaveCurrentDefaults():
     if dt_defaults is None:
         raise Exception('The defaults preference module is unavailable.')
     Values = {
-        'head_width': float(Win.GetInputValue(IDX_HEAD)),
-        'depth': float(Win.GetInputValue(IDX_DEPTH)),
+        'head_width': GetLengthInput(IDX_HEAD),
+        'depth': GetLengthInput(IDX_DEPTH),
         'angle': float(Win.GetInputValue(IDX_ANGLE)),
-        'clearance': float(Win.GetInputValue(IDX_CLEARANCE)),
-        'distance': float(Win.GetInputValue(IDX_DISTANCE)),
-        'min_wall': float(Win.GetInputValue(IDX_MINWALL)),
-        'blend_radius': float(Win.GetInputValue(IDX_BLEND)),
+        'clearance': GetLengthInput(IDX_CLEARANCE),
+        'distance': GetLengthInput(IDX_DISTANCE),
+        'min_wall': GetLengthInput(IDX_MINWALL),
+        'blend_radius': GetLengthInput(IDX_BLEND),
         'length_mode': ['full_seam', 'distance', 'up_to_geometry'].index(NormalizeLengthMode(Win.GetInputValue(IDX_LENGTHMODE))),
     }
     USER_DEFAULTS = dt_defaults.save(DefaultsPath(), Values)
@@ -2656,14 +2683,14 @@ def LoadSelectedJointIntoUI(ChoiceValue):
         ModeIndex = 2
 
     Win.SetInputValue(IDX_LENGTHMODE, ModeIndex)
-    Win.SetInputValue(IDX_HEAD, float(Record['head_width_in']))
-    Win.SetInputValue(IDX_DEPTH, float(Record['depth_in']))
+    SetLengthInput(IDX_HEAD, float(Record['head_width_in']))
+    SetLengthInput(IDX_DEPTH, float(Record['depth_in']))
     Win.SetInputValue(IDX_ANGLE, float(Record['flank_angle_deg']))
-    Win.SetInputValue(IDX_CLEARANCE, float(Record['clearance_in']))
-    Win.SetInputValue(IDX_DISTANCE, float(Record['distance_length_in']))
+    SetLengthInput(IDX_CLEARANCE, float(Record['clearance_in']))
+    SetLengthInput(IDX_DISTANCE, float(Record['distance_length_in']))
     Win.SetInputValue(IDX_LIMITPLANE, '')
-    Win.SetInputValue(IDX_MINWALL, float(Record['minimum_wall_in']))
-    Win.SetInputValue(IDX_BLEND, float(Record.get('corner_blend_radius_in', 0.0)))
+    SetLengthInput(IDX_MINWALL, float(Record['minimum_wall_in']))
+    SetLengthInput(IDX_BLEND, float(Record.get('corner_blend_radius_in', 0.0)))
 
     UpdateLengthModeInputs()
     UpdateMaxHeadDisplay()
@@ -2846,13 +2873,13 @@ def ManageJoint(V):
             LengthMode = NormalizeLengthMode(V[IDX_LENGTHMODE])
             LimitFaceSelection = _CapturedCreateSelections.get('limit') or V[IDX_LIMITPLANE]
             LimitPlaneName = CaptureLimitTarget(LimitFaceSelection) if (LengthMode == 'up_to_geometry' and Operation == 'Create New') else None
-            HeadWidth = float(V[IDX_HEAD])
-            Depth = float(V[IDX_DEPTH])
+            HeadWidth = ToInternalLength(float(V[IDX_HEAD]))
+            Depth = ToInternalLength(float(V[IDX_DEPTH]))
             AngleDeg = float(V[IDX_ANGLE])
-            Clearance = float(V[IDX_CLEARANCE])
-            DistanceLength = float(V[IDX_DISTANCE])
-            MinWall = float(V[IDX_MINWALL])
-            BlendRadius = float(V[IDX_BLEND])
+            Clearance = ToInternalLength(float(V[IDX_CLEARANCE]))
+            DistanceLength = ToInternalLength(float(V[IDX_DISTANCE]))
+            MinWall = ToInternalLength(float(V[IDX_MINWALL]))
+            BlendRadius = ToInternalLength(float(V[IDX_BLEND]))
 
         if Operation == 'Create New':
             Missing = []
@@ -2990,24 +3017,32 @@ Options.append([
 ])
 
 Options.append(['Limit Geometry Face', WindowsInputTypes.String, 'Select geometry in the workspace, then use the capture selector'])
-Options.append(['Male Head Width (in)', WindowsInputTypes.Real, USER_DEFAULTS['head_width']])
-Options.append(['Dovetail Depth (in)', WindowsInputTypes.Real, USER_DEFAULTS['depth']])
+Options.append(['Male Head Width (%s)' % DISPLAY_UNIT, WindowsInputTypes.Real, ToDisplayLength(USER_DEFAULTS['head_width'])])
+Options.append(['Dovetail Depth (%s)' % DISPLAY_UNIT, WindowsInputTypes.Real, ToDisplayLength(USER_DEFAULTS['depth'])])
 Options.append(['Flank Angle (deg)', WindowsInputTypes.Real, USER_DEFAULTS['angle']])
-Options.append(['Mating Surface Clearance (in)', WindowsInputTypes.Real, USER_DEFAULTS['clearance']])
-Options.append(['Distance Length (in)', WindowsInputTypes.Real, USER_DEFAULTS['distance']])
-Options.append(['Minimum Thickness Wall (in)', WindowsInputTypes.Real, USER_DEFAULTS['min_wall']])
-Options.append(['Corner Blend Radius (in)', WindowsInputTypes.Real, USER_DEFAULTS['blend_radius']])
-Options.append(['Max Male Head Width (in)', WindowsInputTypes.String, 'Select start edge'])
+Options.append(['Mating Surface Clearance (%s)' % DISPLAY_UNIT, WindowsInputTypes.Real, ToDisplayLength(USER_DEFAULTS['clearance'])])
+Options.append(['Distance Length (%s)' % DISPLAY_UNIT, WindowsInputTypes.Real, ToDisplayLength(USER_DEFAULTS['distance'])])
+Options.append(['Minimum Thickness Wall (%s)' % DISPLAY_UNIT, WindowsInputTypes.Real, ToDisplayLength(USER_DEFAULTS['min_wall'])])
+Options.append(['Corner Blend Radius (%s)' % DISPLAY_UNIT, WindowsInputTypes.Real, ToDisplayLength(USER_DEFAULTS['blend_radius'])])
+Options.append(['Max Male Head Width (%s)' % DISPLAY_UNIT, WindowsInputTypes.String, 'Select start edge'])
 from dt_form import ManagerForm, run_manager
+
+def CleanupManager():
+    try:
+        DisposeHighlightKeeper()
+    finally:
+        RestoreSessionUnits()
 
 def CreateManagerForm():
     global Win
     Win = ManagerForm(Options, OnInputChanged, ManageJoint,
-                      HandleDefaultsAction, DisposeHighlightKeeper,
-                      'Sliding Dovetail Joint Manager v0.7.1')
+                      HandleDefaultsAction, CleanupManager,
+                      'Sliding Dovetail Joint Manager v0.8.0', DISPLAY_UNIT)
     UpdateOperationUI(0)
     Win.RefreshOperation()
     return Win
 
 run_manager(DT_Parent, CreateManagerForm)
+
+
 

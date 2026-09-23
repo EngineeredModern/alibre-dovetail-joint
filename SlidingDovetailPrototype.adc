@@ -3,8 +3,9 @@
   <DLL type="Managed" loadedWhen="Startup" location="SlidingDovetailAddon05.dll"/>
   <Icon location="SlidingDovetailPrototype.ico"/>
   <Menu text="Sliding Dovetail"/>
-  <Description>Sliding Dovetail Joint Manager v0.7.1</Description>
+  <Description>Sliding Dovetail Joint Manager v0.8.0</Description>
   <Workspace type="Assembly"/>
   <Property name="Identifier" value="{A3F248D9-4C38-42DA-B020-097445264E71}"/>
 </AlibreDesignAddOn>
+
 
