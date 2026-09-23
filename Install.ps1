@@ -15,6 +15,19 @@ if ($Uninstall) {
 }
 $files = @('SlidingDovetailAddon05.dll','SlidingDovetailPrototype.adc','SlidingDovetailPrototype.ico','scripts\bootstrap.py','scripts\manager.py','scripts\dt_defaults.py','scripts\dt_form.py')
 foreach ($file in $files) { if (!(Test-Path -LiteralPath (Join-Path $PSScriptRoot $file))) { throw "Missing package file: $file" } }
+# Refuse to overwrite another add-on. This package owns only its GUID and folder.
+foreach ($key in $keys) {
+  if (Test-Path -LiteralPath $key) {
+    $existing = (Get-ItemProperty -LiteralPath $key -Name $id -ErrorAction SilentlyContinue).$id
+    if ($existing -and (([IO.Path]::GetFullPath($existing)).TrimEnd('\') -ne ([IO.Path]::GetFullPath($destination)).TrimEnd('\'))) {
+      throw "This add-on identifier is already registered to another folder. No changes made: $existing"
+    }
+  }
+}
+if (Test-Path -LiteralPath $destination) {
+  $foreignManifest = Get-ChildItem -LiteralPath $destination -Filter '*.adc' -File -ErrorAction SilentlyContinue | Where-Object { $_.Name -ne 'SlidingDovetailPrototype.adc' }
+  if ($foreignManifest) { throw "The destination belongs to another add-on. No changes made: $($foreignManifest.Name)" }
+}
 New-Item -ItemType Directory -Path (Join-Path $destination 'scripts') -Force | Out-Null
 foreach ($file in $files) { Copy-Item -LiteralPath (Join-Path $PSScriptRoot $file) -Destination (Join-Path $destination $file) -Force }
 New-Item -Path $keys[0] -Force | Out-Null
