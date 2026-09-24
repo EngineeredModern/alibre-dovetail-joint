@@ -1,5 +1,5 @@
 #define AppName "Sliding Dovetail Joint Manager"
-#define AppVersion "0.7.1.1"
+#define AppVersion "0.8.0"
 #define AppPublisher "Chris Adcock"
 #define AddOnIdentifier "{{A3F248D9-4C38-42DA-B020-097445264E71}"
 
@@ -49,10 +49,27 @@ begin
   end;
 end;
 
+procedure RemoveLegacyDovetailCopies();
+begin
+  RegDeleteValue(HKLM, 'SOFTWARE\Alibre Design Add-Ons', '{A3F248D9-4C38-42DA-B020-097445264E71}');
+  RegDeleteValue(HKLM, 'SOFTWARE\WOW6432Node\Alibre Design Add-Ons', '{A3F248D9-4C38-42DA-B020-097445264E71}');
+  RegDeleteKeyIncludingSubkeys(HKLM, 'SOFTWARE\Alibre, LLC\Alibre Design\Addons\SlidingDovetailJointManager');
+  RegDeleteKeyIncludingSubkeys(HKLM, 'SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{A3F248D9-4C38-42DA-B020-097445264E71}_is1_is1');
+  DelTree(ExpandConstant('{commonappdata}\Alibre AddOns\SlidingDovetailPrototype'), True, True, True);
+  DelTree('C:\Program Files\Alibre Design\Addons\SlidingDovetailPrototype', True, True, True);
+  DelTree('C:\Program Files\Alibre Design\Addons\SlidingDovetailJointManager', True, True, True);
+end;
+
 function InitializeSetup(): Boolean;
 begin
   Result := not AlibreIsRunning();
   if not Result then MsgBox('Close Alibre Design, then run this installer again.', mbError, MB_OK);
+end;
+
+function PrepareToInstall(var NeedsRestart: Boolean): String;
+begin
+  RemoveLegacyDovetailCopies();
+  Result := '';
 end;
 
 function InitializeUninstall(): Boolean;
