@@ -2,7 +2,7 @@ param([switch]$Uninstall)
 $ErrorActionPreference = 'Stop'
 $id = '{A3F248D9-4C38-42DA-B020-097445264E71}'
 $destination = Join-Path $env:ProgramData 'Alibre AddOns\SlidingDovetailJointManager'
-$legacyDestination = @('C:\ProgramData\Alibre AddOns\SlidingDovetailPrototype', 'C:\Program Files\Alibre Design\Addons\SlidingDovetailPrototype', 'C:\Program Files\Alibre Design\Addons\SlidingDovetailJointManager')
+$legacyDestinations = @('C:\ProgramData\Alibre AddOns\SlidingDovetailPrototype', 'C:\Program Files\Alibre Design\Addons\SlidingDovetailPrototype', 'C:\Program Files\Alibre Design\Addons\SlidingDovetailJointManager')
 $keys = @('HKLM:\SOFTWARE\Alibre Design Add-Ons', 'HKLM:\SOFTWARE\WOW6432Node\Alibre Design Add-Ons')
 $legacyKey = 'HKLM:\SOFTWARE\Alibre, LLC\Alibre Design\Addons\SlidingDovetailJointManager'
 $uninstallKeys = @(
