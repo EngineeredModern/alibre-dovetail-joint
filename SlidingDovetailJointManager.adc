@@ -1,7 +1,7 @@
 <AlibreDesignAddOn specificationVersion="2" friendlyName="Sliding Dovetail">
   <Author name="Chris Adcock"/>
   <DLL type="Managed" loadedWhen="Startup" location="SlidingDovetailAddon05.dll"/>
-  <Icon location="SlidingDovetailPrototype.ico"/>
+  <Icon location="SlidingDovetailJointManager.ico"/>
   <Menu text="Sliding Dovetail"/>
   <Description>Sliding Dovetail Joint Manager v0.8.0</Description>
   <Workspace type="Assembly"/>

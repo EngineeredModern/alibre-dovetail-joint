@@ -171,7 +171,7 @@ except:
 
 def DefaultsPath():
     Root = os.environ.get('APPDATA', '')
-    return os.path.join(Root, 'SlidingDovetailPrototype', 'defaults.json')
+    return os.path.join(Root, 'SlidingDovetailJointManager', 'defaults.json')
 
 def LoadUserDefaults():
     if dt_defaults is None:

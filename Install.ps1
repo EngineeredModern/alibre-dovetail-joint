@@ -1,8 +1,8 @@
 param([switch]$Uninstall)
 $ErrorActionPreference = 'Stop'
 $id = '{A3F248D9-4C38-42DA-B020-097445264E71}'
-$destination = Join-Path $env:ProgramData 'Alibre AddOns\SlidingDovetailPrototype'
-$legacyDestination = 'C:\Program Files\Alibre Design\Addons\SlidingDovetailPrototype'
+$destination = Join-Path $env:ProgramData 'Alibre AddOns\SlidingDovetailJointManager'
+$legacyDestination = @('C:\ProgramData\Alibre AddOns\SlidingDovetailPrototype', 'C:\Program Files\Alibre Design\Addons\SlidingDovetailPrototype', 'C:\Program Files\Alibre Design\Addons\SlidingDovetailJointManager')
 $keys = @('HKLM:\SOFTWARE\Alibre Design Add-Ons', 'HKLM:\SOFTWARE\WOW6432Node\Alibre Design Add-Ons')
 $legacyKey = 'HKLM:\SOFTWARE\Alibre, LLC\Alibre Design\Addons\SlidingDovetailJointManager'
 $uninstallKeys = @(
@@ -20,7 +20,7 @@ function Remove-DovetailArtifacts {
   }
   if (Test-Path -LiteralPath $legacyKey) { Remove-Item -LiteralPath $legacyKey -Recurse -Force }
   foreach ($key in $uninstallKeys) { if (Test-Path -LiteralPath $key) { Remove-Item -LiteralPath $key -Recurse -Force } }
-  foreach ($path in @($destination, $legacyDestination)) {
+  foreach ($path in @($destination) + $legacyDestinations) {
     if (Test-Path -LiteralPath $path) { Remove-Item -LiteralPath $path -Recurse -Force }
   }
 }
@@ -31,7 +31,7 @@ if ($Uninstall) {
   exit
 }
 
-$files = @('SlidingDovetailAddon05.dll','SlidingDovetailPrototype.adc','SlidingDovetailPrototype.ico','scripts\bootstrap.py','scripts\manager.py','scripts\dt_defaults.py','scripts\dt_form.py')
+$files = @('SlidingDovetailAddon05.dll','SlidingDovetailJointManager.adc','SlidingDovetailJointManager.ico','scripts\bootstrap.py','scripts\manager.py','scripts\dt_defaults.py','scripts\dt_form.py')
 foreach ($file in $files) { if (!(Test-Path -LiteralPath (Join-Path $PSScriptRoot $file))) { throw "Missing package file: $file" } }
 # This clears only historical Sliding Dovetail registrations and folders.
 # Spline Tools uses a different folder and is never enumerated or changed.

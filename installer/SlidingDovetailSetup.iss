@@ -9,7 +9,7 @@ AppName={#AppName}
 AppVersion={#AppVersion}
 AppVerName={#AppName} {#AppVersion}
 AppPublisher={#AppPublisher}
-DefaultDirName={commonappdata}\Alibre AddOns\SlidingDovetailPrototype
+DefaultDirName={commonappdata}\Alibre AddOns\SlidingDovetailJointManager
 DisableProgramGroupPage=yes
 PrivilegesRequired=admin
 ArchitecturesAllowed=x64compatible
@@ -20,12 +20,12 @@ Compression=lzma
 SolidCompression=yes
 WizardStyle=modern
 UninstallDisplayName={#AppName}
-UninstallDisplayIcon={app}\SlidingDovetailPrototype.ico
+UninstallDisplayIcon={app}\SlidingDovetailJointManager.ico
 
 [Files]
 Source: "..\SlidingDovetailAddon05.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\SlidingDovetailPrototype.adc"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\SlidingDovetailPrototype.ico"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\SlidingDovetailJointManager.adc"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\SlidingDovetailJointManager.ico"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\scripts\*"; DestDir: "{app}\scripts"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "..\README.md"; DestDir: "{app}"; Flags: ignoreversion
 
